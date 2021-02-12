@@ -6,7 +6,9 @@ type Column = Int
 type Value = Int
 type Grid = [[Value]]
 type Sudoku = (Row,Column) -> Value
+-- Type Constraint has x,y co-ordinates, and list of possible values 
 type Constraint = (Row, Column, [Value])
+-- Node is a potential sudoku puzzle solution (semi-complete or complete)
 type Node = (Sudoku, [Constraint])
 
 positions :: [Int]
@@ -61,7 +63,8 @@ freeInSubgrid sud (r,c) = values \\ getSubgrid sud (r,c)
 -- combine three functions above to have select 
 -- get elem present in all three lists
 freeAtPos :: Sudoku -> (Row,Column) -> [Value]
-freeAtPos sud (r,c) = intersect (intersect (freeInRow sud r) (freeInColumn sud c)) (freeInSubgrid sud (r,c))
+freeAtPos sud (r,c) =   intersect (freeInRow sud r) (freeInColumn sud c)
+    `intersect` freeInSubgrid sud (r, c)
 
 -- return co-ordinates for where the zeroes are.
 -- get all values, get all positions, filter only positions of value 0
@@ -92,10 +95,25 @@ subgridValid sud (r,c) = alreadyInSubgrid sud (r,c) == nub (alreadyInSubgrid sud
 -- combine all three valid checks for the whole sudoku puzzle
 -- if any element is False, return False. If all elements are True, return True. 
 consistent :: Sudoku -> Bool
-consistent sud = notElem False (concat [
-    [rowValid sud r | r <- positions], 
-    [columnValid sud c | c <- positions], 
-    [subgridValid sud (d,e) | d <- centerOfBlocks, e <- centerOfBlocks] ])
+consistent sud = 
+    and
+        (concat
+        [[rowValid sud r | r <- positions],
+            [columnValid sud c | c <- positions],
+            [subgridValid sud (d, e) |
+            d <- centerOfBlocks, e <- centerOfBlocks]])
+
+-- Function for debugging Backtracking algorithm
+printNode :: Node -> IO() 
+printNode = printSudoku . fst
+
+-- TODO: list of possible constraints ordered shortest to longest
+constraints :: Sudoku -> [Constraint]
+constraints sud = [(1, 1, [1,2,3])]
+
+-- TODO: Backtrack sudoku solver
+solveSudoku :: Sudoku -> Sudoku
+solveSudoku sud = sud
 
 -- Read a file-sudoku into a Sudoku
 readSudoku :: String -> IO Sudoku
