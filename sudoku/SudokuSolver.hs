@@ -71,9 +71,27 @@ openPositions sud = [(r,c) | r <- positions, c <- positions, sud(r,c) == 0]
 alreadyInRow:: Sudoku -> Row -> [Value]
 alreadyInRow sud r = filter(/= 0)(getRow sud r)
 
--- check that there are no duplicates
+-- check that there are no duplicates in row
 rowValid :: Sudoku -> Row -> Bool
 rowValid sud r = alreadyInRow sud r == nub (alreadyInRow sud r)
+
+alreadyInColumn:: Sudoku -> Column -> [Value]
+alreadyInColumn sud c = filter(/= 0)(getColumn sud c)
+
+-- check that there are no duplicates in column
+columnValid :: Sudoku -> Column -> Bool
+columnValid sud c = alreadyInColumn sud c == nub (alreadyInColumn sud c)
+
+alreadyInSubgrid:: Sudoku -> (Row,Column) -> [Value]
+alreadyInSubgrid sud (r,c) = filter(/= 0)(getSubgrid sud (r,c))
+
+-- check that there are no duplicates in sub-grid
+subgridValid :: Sudoku -> (Row,Column) -> Bool
+subgridValid sud (r,c) = alreadyInSubgrid sud (r,c) == nub (alreadyInSubgrid sud (r,c))
+
+-- combine all three checks above for whole sudoku
+-- consistent :: Sudoku -> Bool
+-- consistent sud = True
 
 -- Read a file-sudoku into a Sudoku
 readSudoku :: String -> IO Sudoku
@@ -114,15 +132,15 @@ grid = [
 
 invalidGrid :: Grid
 invalidGrid = [
-    [5,3,0,0,7,7,0,0,0],
-    [6,0,0,1,9,5,0,0,7],
-    [0,9,8,7,0,0,0,6,0],
-    [8,0,0,0,6,6,0,0,3],
-    [4,0,0,8,0,3,3,0,1],
-    [7,0,0,8,2,0,0,0,6],
-    [0,6,6,0,0,0,2,8,0],
-    [0,0,0,4,1,9,9,0,5],
-    [0,0,0,8,8,0,0,7,9]]
+    [9,9,0,0,7,7,0,0,0],
+    [9,0,0,1,9,9,0,0,7],
+    [0,9,9,7,0,0,0,9,0],
+    [9,0,0,0,9,9,0,0,9],
+    [4,0,0,9,0,9,9,0,1],
+    [7,0,0,9,2,0,0,0,9],
+    [0,9,9,0,0,0,2,9,0],
+    [0,0,0,4,1,9,9,0,9],
+    [0,0,0,9,9,0,0,7,9]]
 
 {-
 runhaskell ./sudoku/SudokuSolver.hs ./sudoku/sudoku_boards/simple_1_open_spot.txt
