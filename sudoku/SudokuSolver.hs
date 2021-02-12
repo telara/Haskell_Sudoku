@@ -89,9 +89,13 @@ alreadyInSubgrid sud (r,c) = filter(/= 0)(getSubgrid sud (r,c))
 subgridValid :: Sudoku -> (Row,Column) -> Bool
 subgridValid sud (r,c) = alreadyInSubgrid sud (r,c) == nub (alreadyInSubgrid sud (r,c))
 
--- combine all three checks above for whole sudoku
--- consistent :: Sudoku -> Bool
--- consistent sud = True
+-- combine all three valid checks for the whole sudoku puzzle
+-- if any element is False, return False. If all elements are True, return True. 
+consistent :: Sudoku -> Bool
+consistent sud = notElem False (concat [
+    [rowValid sud r | r <- positions], 
+    [columnValid sud c | c <- positions], 
+    [subgridValid sud (d,e) | d <- centerOfBlocks, e <- centerOfBlocks] ])
 
 -- Read a file-sudoku into a Sudoku
 readSudoku :: String -> IO Sudoku
