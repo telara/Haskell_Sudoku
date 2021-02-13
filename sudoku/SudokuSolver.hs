@@ -122,19 +122,17 @@ constraints sud = sortLOCOL (zip (openPositions sud) [
 isCompletedSudoku :: Sudoku -> Bool
 isCompletedSudoku sud = True
 
-nextSudokus :: Sudoku -> (Sudoku, Sudoku)
-nextSudokus sud = (sud, sud)
+makeNext :: Sudoku -> (Sudoku, Sudoku)
+makeNext sud = (sud, sud)
 -- TODO: Backtrack sudoku solver: depth-first search
--- generate list of constraints. 
--- fill in first element with first value.
--- if board is consistent, write new sudoku board,
-    -- get new constraints
-    -- and fill in first element with first value.
--- if not, remove invalid value from element in list of constraints.
-    -- go back to the previous valid board, 
-    -- and fill in first element with first value.
--- I THINK: there is no need to update the values in list-of-constraints, 
-    -- because with recursion, it will go deeper into the for loop?
+
+-- solve sud: apply constraints to the sud,
+    -- no more constraints? printSudoku.
+    -- makeNext sud: make two new boards, 
+        -- one with head of values of first element filled into the sud,  
+        -- one with tail of values of first element filled into the sud.
+        -- if first board is consistent, solve sud.
+        -- if not, makeNext sud on second board.
 
 solveSudoku :: Sudoku -> Sudoku
 solveSudoku sud = sud
