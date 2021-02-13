@@ -100,18 +100,42 @@ consistent sud =
         (concat
         [[rowValid sud r | r <- positions],
             [columnValid sud c | c <- positions],
-            [subgridValid sud (d, e) |
-            d <- centerOfBlocks, e <- centerOfBlocks]])
+            [subgridValid sud (r, c) |
+            r <- centerOfBlocks, c <- centerOfBlocks]])
 
 -- Function for debugging Backtracking algorithm
 printNode :: Node -> IO() 
 printNode = printSudoku . fst
 
--- TODO: list of possible constraints ordered shortest to longest
-constraints :: Sudoku -> [Constraint]
-constraints sud = [(1, 1, [1,2,3])]
+-- Function sorts a list of constraints based on length
+sortLOCOL :: [((Row, Column), [Value])] -> [((Row, Column), [Value])]
+sortLOCOL lofc = sortBy (\e1 e2 -> compare (length (concat e1)) (length (concat e2))) lofc
 
--- TODO: Backtrack sudoku solver
+-- TODO: list of possible constraints ordered shortest to longest
+-- type Constraint = (Row, Column, [Value]) 
+-- TODO: Fix constraint so it fits the above format (remove brackets around co-ordinate tuple)
+constraints :: Sudoku -> [((Row, Column), [Value])]
+constraints sud = sortLOCOL (zip (openPositions sud) [
+    freeAtPos sud (x,y) | (x,y) <- openPositions sud])
+-- constraints sud = [(1, 1, [1,2,3]), (1, 2, [2,3,4])]
+
+isCompletedSudoku :: Sudoku -> Bool
+isCompletedSudoku sud = True
+
+nextSudokus :: Sudoku -> (Sudoku, Sudoku)
+nextSudokus sud = (sud, sud)
+-- TODO: Backtrack sudoku solver: depth-first search
+-- generate list of constraints. 
+-- fill in first element with first value.
+-- if board is consistent, write new sudoku board,
+    -- get new constraints
+    -- and fill in first element with first value.
+-- if not, remove invalid value from element in list of constraints.
+    -- go back to the previous valid board, 
+    -- and fill in first element with first value.
+-- I THINK: there is no need to update the values in list-of-constraints, 
+    -- because with recursion, it will go deeper into the for loop?
+
 solveSudoku :: Sudoku -> Sudoku
 solveSudoku sud = sud
 
