@@ -1,6 +1,7 @@
 import System.Environment
 import Data.List
 
+
 type Row = Int
 type Column = Int
 type Value = Int
@@ -71,10 +72,10 @@ freeAtPos sud (r,c) =   intersect (freeInRow sud r) (freeInColumn sud c)
 openPositions :: Sudoku -> [(Row,Column)]
 openPositions sud = [(r,c) | r <- positions, c <- positions, sud(r,c) == 0]
 
+-- check that there are no duplicates in row
 alreadyInRow:: Sudoku -> Row -> [Value]
 alreadyInRow sud r = filter(/= 0)(getRow sud r)
 
--- check that there are no duplicates in row
 rowValid :: Sudoku -> Row -> Bool
 rowValid sud r = alreadyInRow sud r == nub (alreadyInRow sud r)
 
@@ -116,40 +117,51 @@ sortLOCOL lofc = sortBy (\(r1, c1, v1) (r2, c2, v2) -> compare (length v1) (leng
 constraints :: Sudoku -> [Constraint]
 constraints sud = sortLOCOL [(x, y, freeAtPos sud (x, y)) | (x,y) <- openPositions sud]
 
--- TODO: check grid is full
+filteredConstraints :: [Constraint] -> [Constraint]
+filteredConstraints cons = [ (x, y, [z]) | (x, y, [z]) <- cons, not (null [z]) ]
+
+constraintsOfLengthOne :: [Constraint] -> [Constraint]
+constraintsOfLengthOne cons = [ (x, y, [z]) | (x, y, [z]) <- cons, length [z] == 1 ]
+
+-- TODO: check grid is full - not necessary, but isFinished is important. If finished, is consistent? else broken
 isCompletedSudoku :: Sudoku -> Bool
-isCompletedSudoku sud = True
+isCompletedSudoku sud = True -- consistent and no constraints 
 
 firstConstraint :: [Constraint] -> [Constraint]
 firstConstraint cons = [(r, c, [head vs]) | (r, c, vs) <- cons]
-
-restOfConstraints :: [Constraint] -> [Constraint]
-restOfConstraints cons = [(r, c, tail vs)| (r, c, vs) <- cons]
 
 -- Function that makes node (type Node = (Sudoku, [Constraint])) 
 makeNode1 :: Sudoku -> Node
 makeNode1 sud = (sud, firstConstraint(constraints sud))
 
-makeNode2 :: Sudoku -> Node
-makeNode2 sud = (sud, restOfConstraints(constraints sud))
+-- Function returns input for extend function
+extendType :: Constraint -> (Row, Column, Value)
+extendType (r, c, v) = (r, c, head v)
 
--- TODO: apply constraints to sudoku
+-- Function returns list of inputs for extend function
+-- e.g. constraint (8,3,[4,7]) returns [(8,3,4), (8,3,7)]
+listOfExtendTypes :: (Row, Column, [Value]) -> [(Row, Column, Value)]
+listOfExtendTypes (row, col, val) = [(r, c, v) | r <- [row], c <- [col], v <- val]
+
+-- applySureValues - takes node, filter values of length one. Then make new constraints
+applySureValues :: Node -> Sudoku
+applySureValues (sud, cons) = foldl (\x y -> extend x y) (sud) $ map (\x -> extendType x) $ constraintsOfLengthOne (cons)
+
 updateSudoku:: Node -> Sudoku
--- if values is of length 1, apply it.
-updateSudoku nod = (grid2sud grid)
+updateSudoku nod = grid2sud grid
 
-makeNext :: Sudoku -> (Sudoku, Sudoku)
-makeNext sud = (updateSudoku(makeNode1 sud), updateSudoku(makeNode2 sud))
 -- TODO: Backtrack sudoku solver: depth-first search
--- solve sud: apply constraints to the sud,
-    -- if Values are empty? if Sudoku is full, 1, otherwise error.
+
+-- solve su = 
+    -- updateSudoku: map single values to sudoku with extend
+    -- if there are no more constraints? if Sudoku is full, printSudoku, otherwise error "impossible puzzle."
     -- makeNext sud: make two new boards, 
         -- one with head of values of first element filled into the sud,  
         -- one with tail of values of first element filled into the sud.
         -- if first board is consistent, solve sud.
         -- if not, makeNext sud on second board.
 solveSudoku :: Sudoku -> Sudoku
-solveSudoku sud = sud
+solveSudoku sud = grid2sud grid
 
 -- Read a file-sudoku into a Sudoku
 readSudoku :: String -> IO Sudoku
@@ -215,6 +227,8 @@ rowValid (grid2sud invalidGrid) 1
 False
 rowValid (grid2sud grid) 1
 True 
+
+printNode (makeNode1 (grid2sud grid))
 
 :main sudoku_boards/hard_sudoku_1.txt
 -}
