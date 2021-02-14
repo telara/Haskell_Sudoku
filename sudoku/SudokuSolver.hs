@@ -1,7 +1,6 @@
 import System.Environment
 import Data.List
 
-
 type Row = Int
 type Column = Int
 type Value = Int
@@ -145,7 +144,7 @@ listOfExtendTypes (row, col, val) = [(r, c, v) | r <- [row], c <- [col], v <- va
 
 -- applySureValues - takes node, filter values of length one. Then make new constraints
 applySureValues :: Node -> Sudoku
-applySureValues (sud, cons) = foldl (\x y -> extend x y) (sud) $ map (\x -> extendType x) $ constraintsOfLengthOne (cons)
+applySureValues (sud, cons) = foldl extend sud $ map extendType $ constraintsOfLengthOne cons
 
 updateSudoku:: Node -> Sudoku
 updateSudoku nod = grid2sud grid
