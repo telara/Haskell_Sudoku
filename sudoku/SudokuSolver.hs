@@ -45,10 +45,11 @@ getRow sud r = [sud (r,c) | c <- positions]
 freeInRow:: Sudoku -> Row -> [Value]
 freeInRow sud r = values \\ getRow sud r
 
--- Function to get list of free values for column of sudoku 
+-- Function to get list of values for column of sudoku 
 getColumn:: Sudoku -> Column -> [Value]
 getColumn sud c = [sud (r,c) | r <- positions]
 
+-- Function to get list of free values for column of sudoku 
 freeInColumn:: Sudoku -> Column -> [Value]
 freeInColumn sud c = values \\ getColumn sud c
 
@@ -60,13 +61,12 @@ getSubgrid sud (y,x) = [ sud (r,c) | r <- concat $ filter(elem y)blocks, c <- co
 freeInSubgrid :: Sudoku -> (Row,Column) -> [Value]
 freeInSubgrid sud (r,c) = values \\ getSubgrid sud (r,c)
 
--- combine three functions above to have select 
--- get elem present in all three lists
+-- Function combines all three functions above to have select list of free values
 freeAtPos :: Sudoku -> (Row,Column) -> [Value]
 freeAtPos sud (r,c) =   intersect (freeInRow sud r) (freeInColumn sud c)
     `intersect` freeInSubgrid sud (r, c)
 
--- return co-ordinates for where the zeroes are.
+-- Function returns co-ordinates for where the zeroes are.
 -- get all values, get all positions, filter only positions of value 0
 openPositions :: Sudoku -> [(Row,Column)]
 openPositions sud = [(r,c) | r <- positions, c <- positions, sud(r,c) == 0]
@@ -78,6 +78,7 @@ alreadyInRow sud r = filter(/= 0)(getRow sud r)
 rowValid :: Sudoku -> Row -> Bool
 rowValid sud r = alreadyInRow sud r == nub (alreadyInRow sud r)
 
+-- check that there are no duplicates in column
 alreadyInColumn:: Sudoku -> Column -> [Value]
 alreadyInColumn sud c = filter(/= 0)(getColumn sud c)
 
@@ -93,7 +94,6 @@ subgridValid :: Sudoku -> (Row,Column) -> Bool
 subgridValid sud (r,c) = alreadyInSubgrid sud (r,c) == nub (alreadyInSubgrid sud (r,c))
 
 -- combine all three valid checks for the whole sudoku puzzle
--- if any element is False, return False. If all elements are True, return True. 
 consistent :: Sudoku -> Bool
 consistent sud = 
     and
@@ -108,29 +108,46 @@ printNode :: Node -> IO()
 printNode = printSudoku . fst
 
 -- Function sorts a list of constraints based on length
--- type Constraint = (Row, Column, [Value]) 
 sortLOCOL :: [Constraint] -> [Constraint]
 sortLOCOL lofc = sortBy (\(r1, c1, v1) (r2, c2, v2) -> compare (length v1) (length v2)) lofc
 
--- list of possible constraints ordered shortest to longest
+-- Function returns list of possible constraints ordered shortest to longest
+-- TODO: if values are empty, remove constraint
 constraints :: Sudoku -> [Constraint]
-constraints sud = [(x, y, freeAtPos sud (x, y)) | (x,y) <- openPositions sud]
+constraints sud = sortLOCOL [(x, y, freeAtPos sud (x, y)) | (x,y) <- openPositions sud]
 
+-- TODO: check grid is full
 isCompletedSudoku :: Sudoku -> Bool
 isCompletedSudoku sud = True
 
-makeNext :: Sudoku -> (Sudoku, Sudoku)
-makeNext sud = (sud, sud)
--- TODO: Backtrack sudoku solver: depth-first search
+firstConstraint :: [Constraint] -> [Constraint]
+firstConstraint cons = [(r, c, [head vs]) | (r, c, vs) <- cons]
 
+restOfConstraints :: [Constraint] -> [Constraint]
+restOfConstraints cons = [(r, c, tail vs)| (r, c, vs) <- cons]
+
+-- Function that makes node (type Node = (Sudoku, [Constraint])) 
+makeNode1 :: Sudoku -> Node
+makeNode1 sud = (sud, firstConstraint(constraints sud))
+
+makeNode2 :: Sudoku -> Node
+makeNode2 sud = (sud, restOfConstraints(constraints sud))
+
+-- TODO: apply constraints to sudoku
+updateSudoku:: Node -> Sudoku
+-- if values is of length 1, apply it.
+updateSudoku nod = (grid2sud grid)
+
+makeNext :: Sudoku -> (Sudoku, Sudoku)
+makeNext sud = (updateSudoku(makeNode1 sud), updateSudoku(makeNode2 sud))
+-- TODO: Backtrack sudoku solver: depth-first search
 -- solve sud: apply constraints to the sud,
-    -- no more constraints? printSudoku.
+    -- if Values are empty? if Sudoku is full, 1, otherwise error.
     -- makeNext sud: make two new boards, 
         -- one with head of values of first element filled into the sud,  
         -- one with tail of values of first element filled into the sud.
         -- if first board is consistent, solve sud.
         -- if not, makeNext sud on second board.
-
 solveSudoku :: Sudoku -> Sudoku
 solveSudoku sud = sud
 
